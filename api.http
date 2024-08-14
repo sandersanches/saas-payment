@@ -1,0 +1,26 @@
+GET http://localhost:3000/users http/1.1
+###
+
+GET http://localhost:3000/users/d6d8e99c-c9a6-4de3-801e-28d223f67eb9 http/1.1
+###
+
+POST http://localhost:3000/users HTTP/1.1
+content-type: application/json
+
+{
+    "name": "Sanchess",
+    "email": "sanches@teste2.com.br"
+}
+###
+
+POST http://localhost:3000/todo HTTP/1.1
+content-type: application/json
+x-user-id: d6d8e99c-c9a6-4de3-801e-28d223f67eb9
+
+{
+    "title": "Minha Atividade 5"
+}
+
+###
+POST http://localhost:3000/checkout HTTP/1.1
+x-user-id: d6d8e99c-c9a6-4de3-801e-28d223f67eb9

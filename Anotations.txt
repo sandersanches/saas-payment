@@ -1,0 +1,31 @@
+módulos e extensões instalados: 
+    bun: 
+        Função: Gerenciador de pacotes, tipo npm e yarn.
+
+    Rest Client:
+        Função: Permitir o envio de solicitações HTTP e receber resposta diretamente no Visual Studio Code.
+        Instalação: É um módulo no visual estudio. basta pesquisar e instalar.
+    
+    Prisma: 
+        Função: O Prisma torna o trabalho com banco de dados mais fácil.
+        Instalação: 
+            bun add prisma -d
+            npm install typescript ts-node @types/node --save-dev
+            tambem foi instalado o módulo do prisma, para syntax highlighting
+        
+        Inicialização:
+            bun prisma init
+        
+        Criar tabelas de bancos com o prinma. 
+            bun prisma migrate dev --name init
+        
+        Atualizar modificações realizadas no banco de dados:
+            bun prisma migrate dev --name add-relation-between-todo-and-user
+
+        inicializa a interface para o banco de dados:
+            bun prisma studio
+    
+    Stripe:
+        Função: Módulo de pagamento
+        Instalação
+            bun add stripe
