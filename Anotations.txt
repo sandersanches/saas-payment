@@ -29,3 +29,7 @@ módulos e extensões instalados:
         Função: Módulo de pagamento
         Instalação
             bun add stripe
+        
+        Teste webhook:
+            stripe login
+            stripe listen --forward-to localhost:3000/stripe

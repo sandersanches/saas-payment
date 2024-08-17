@@ -8,19 +8,19 @@ POST http://localhost:3000/users HTTP/1.1
 content-type: application/json
 
 {
-    "name": "Sanchess",
-    "email": "sanches@teste2.com.br"
+    "name": "Sander2",
+    "email": "sander2@sander.com.br"
 }
 ###
 
 POST http://localhost:3000/todo HTTP/1.1
 content-type: application/json
-x-user-id: d6d8e99c-c9a6-4de3-801e-28d223f67eb9
+x-user-id: 1d55d881-7a31-494d-88c1-ade7a69026ce
 
 {
-    "title": "Minha Atividade 5"
+    "title": "task #8"
 }
 
 ###
 POST http://localhost:3000/checkout HTTP/1.1
-x-user-id: d6d8e99c-c9a6-4de3-801e-28d223f67eb9
+x-user-id: 1d55d881-7a31-494d-88c1-ade7a69026ce

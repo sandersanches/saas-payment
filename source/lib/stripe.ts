@@ -3,15 +3,42 @@ import { config } from "../config";
 import { prisma } from "./prisma";
 
 export const stripe = new Stripe(config.stripe.secretKey, {
-    apiVersion: '2024-06-20'
+    apiVersion: '2024-06-20',
+    httpClient: Stripe.createFetchHttpClient(),
 })
 
-export const createCheckoutSession = async (userId: string) => {
+export const getstripeCostumerByEmail =async (email: string) => {
+    const customer = await stripe.customers.list({ email });
+    return customer.data[0];
+}
+
+export const createStripeCustomer = async( 
+    input: {
+        name?: string
+        email: string
+    }
+) => {
+    let stripeCustomer = await getstripeCostumerByEmail(input.email)
+    
+    if (stripeCustomer) return stripeCustomer
+    
+    return await stripe.customers.create({
+        name: input.name,
+        email:input.email
+    });
+}
+
+
+export const createCheckoutSession = async (userId: string, userName:string, userEmail: string) => {
     try {
+
+        const stripeCustomer = await createStripeCustomer({name: userName, email: userEmail})
+
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             mode: 'subscription',
             client_reference_id: userId,
+            customer: stripeCustomer.id,
             success_url: 'http://localhost:3000/sucess.html',
             cancel_url: 'http://localhost:3000/cancel.html',
             line_items: [{
@@ -21,19 +48,21 @@ export const createCheckoutSession = async (userId: string) => {
         });
 
         return{
+            stripeCustomerId: stripeCustomer.id,
             url: session.url
         }
     } catch (error) {
-        console.error(error);
+        throw new Error('Error to create checkout session')
     }
 
 }
 
-export const handleProcessWebhookCheckout = async (event: {object: Stripe.Checkout.Session}) => {
-    const clientReferenceId = event.object.client_reference_id as string
-    const stripeSubscriptionId = event.object.subscription as string
-    const stripeCustomerId = event.object.customer as string
-    const checkoutStatus = event.object.status
+export const handleProcessWebhookCheckout = async (event: {data: {object: Stripe.Checkout.Session}}) => {
+
+    const clientReferenceId = event.data.object.client_reference_id as string
+    const stripeSubscriptionId = event.data.object.subscription as string
+    const stripeCustomerId = event.data.object.customer as string
+    const checkoutStatus = event.data.object.status
 
     if(checkoutStatus !== 'complete') return
 
@@ -62,12 +91,16 @@ export const handleProcessWebhookCheckout = async (event: {object: Stripe.Checko
     })
 }
 
-export const handleProcessWebhookUpdatedScription = async (event: { object: Stripe.Subscription}) => {
-    const stripeCustomerId = event.object.customer as string
-    const stripeSubscriptionId = event.object.id as string
-    const stripeSubscriptionStatus = event.object.status
+export const handleProcessWebhookUpdatedScription = async (event: {data: { object: Stripe.Subscription}}) => {
 
-    if(stripeSubscriptionStatus !== "active") return
+    const stripeCustomerId = event.data.object.customer as string
+    const stripeSubscriptionId = event.data.object.id as string
+    const stripeSubscriptionStatus = event.data.object.status
+
+    console.log(`stripeCustomerId: ${stripeCustomerId}`);
+    console.log(`stripeSubscriptionId: ${stripeSubscriptionId}`);
+    console.log(`stripeSubscriptionStatus: ${stripeSubscriptionStatus}`);
+    
 
     if(!stripeCustomerId || !stripeSubscriptionId){
         throw new Error ('stripeCustomerId and stripeSubscriptionId is required!');
@@ -75,7 +108,7 @@ export const handleProcessWebhookUpdatedScription = async (event: { object: Stri
 
     const userExists = await prisma.user.findFirst({
         where:{
-            id: stripeCustomerId
+            stripeCustomerId: stripeCustomerId
         }
     })
 
@@ -85,7 +118,7 @@ export const handleProcessWebhookUpdatedScription = async (event: { object: Stri
 
     await prisma.user.update({
         where: {
-            id: stripeCustomerId
+            id: userExists.id
         },
         data: {
             stripeCustomerId, 
@@ -93,5 +126,4 @@ export const handleProcessWebhookUpdatedScription = async (event: { object: Stri
             stripeSubscriptionStatus
         }   
     })
-
 }

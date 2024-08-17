@@ -3,6 +3,9 @@ import { prisma } from "../lib/prisma"
 import { createCheckoutSession } from "../lib/stripe"
 
 export const createCheckoutController = async (request: Request, response: Response) => {
+
+    console.log('Checkout processing');
+    
     const userId = request.headers['x-user-id']
 
     if(!userId){
@@ -23,7 +26,16 @@ export const createCheckoutController = async (request: Request, response: Respo
         })
     }
 
-    const checkout = await createCheckoutSession(user.id)
+    const checkout = await createCheckoutSession(user.id, user.name, user.email)
+
+    await prisma.user.update({
+        where: {
+            id: user.id 
+        },
+        data:{
+            stripeCustomerId: checkout.stripeCustomerId 
+        }
+    })
 
     response.status(201).send(checkout);
 

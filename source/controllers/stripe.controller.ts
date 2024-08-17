@@ -1,11 +1,14 @@
 import type { Request, Response } from "express"
 import { config } from "../config";
 import { handleProcessWebhookCheckout, handleProcessWebhookUpdatedScription, stripe } from "../lib/stripe";
+import Stripe from "stripe";
 
 export const stripeWebhookController = async (request: Request, response: Response) => {
+    
+
     let event = request.body;
 
-    if (!config.stripe.secretKey){
+    if (!config.stripe.webhookSecret){
         console.error('STRIPE_WEBHOOK_KEY is not set');
         return response.sendStatus(400);
     }
@@ -13,10 +16,12 @@ export const stripeWebhookController = async (request: Request, response: Respon
     const signature = request.headers['stripe-signature'] as string;
 
     try{
-        event = stripe.webhooks.constructEvent(
+        event = await stripe.webhooks.constructEventAsync(
             request.body, 
             signature,
-            config.stripe.secretKey
+            config.stripe.webhookSecret,
+            undefined,
+            Stripe.createSubtleCryptoProvider()    
         )
     }catch(err){
         const errorMessage = () => {
@@ -45,7 +50,7 @@ export const stripeWebhookController = async (request: Request, response: Respon
                 console.log(`Unhandled event type ${event.type}`);
         }
 
-        response.send();
+        return response.json({ received: true});
     } catch (err) {
         const errorMessage = () => {
             if(err instanceof Error)  return err.message

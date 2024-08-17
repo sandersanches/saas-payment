@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
+import { createStripeCustomer } from "../lib/stripe";
 
 export const listUserController = async (request: Request, response: Response) => {
     const users = await prisma.user.findMany()
@@ -34,22 +35,26 @@ export const createUserController = async (request: Request, response: Response)
         })
     }
 
-    const userEmailalreadyExist = await prisma.user.findUnique({
+    const userEmailAlreadyExist = await prisma.user.findUnique({
         where: {
             email: email
         }
     })
 
-    if(userEmailalreadyExist){
+    if(userEmailAlreadyExist){
         return response.status(400).send({
             error: 'email alread in use'
         })
     }
 
+    const stripeCustomer = await createStripeCustomer({email, name})
+
+
     const user = await prisma.user.create({
         data:{
             name:name,
-            email:email
+            email:email,
+            stripeCustomerId:stripeCustomer.id
         }
     })
 
